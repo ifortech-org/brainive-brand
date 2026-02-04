@@ -45,7 +45,18 @@ export default function Footer() {
             </Link>
           ))}
         </div>
-        <div className="mt-8 flex flex-col lg:flex-row gap-6 justify-center text-center lg:mt-5 text-xs border-t pt-8">
+        {/* Modifica veloce rimosso lg:flex-row. se serve si sistema più avanti */}
+        {/* <div className="mt-8 flex flex-col lg:flex-row gap-6 justify-center text-center lg:mt-5 text-xs border-t pt-8"> */}
+        <div className="mt-8 flex flex-col gap-4 justify-center text-center lg:mt-5 text-xs border-t pt-8">
+          <p className="text-xs font-thin">
+            Brainive è un marchio di iFortech srl
+          </p>
+          <p className="text-xs font-thin">
+            CAP. SOC. € 40.000,00 I.V. - P.IVA E CF: 07927140967 - REA: MI-1991600
+          </p>
+          <p className="text-xs font-thin">
+            SEDE LEGALE: VIA PORDENONE 35 - COLOGNO MONZESE - 20093 (MI)
+          </p>
           <p className="text-foreground/60">
             &copy; {getCurrentYear()}&nbsp;iFortech. All rights reserved.
           </p>
