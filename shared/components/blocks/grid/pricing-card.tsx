@@ -28,17 +28,17 @@ export default function PricingCard({
     <div
       key={title}
       className="flex w-full rounded-3xl ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 group">
-      <div className="flex w-full flex-col justify-between border rounded-3xl p-8">
+      <div className="flex w-full flex-col justify-between border rounded-3xl p-8 text-center">
         <div
           className={cn(color === "primary" ? "text-background" : undefined)}>
           {title && (
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-center items-center gap-2">
               <h3 className="font-bold text-xl leading-[1.2]">{title}</h3>
               {tagLine && <Badge>{tagLine}</Badge>}
             </div>
           )}
           {price && price.value && (
-            <div className="flex items-end my-8 gap-1">
+            <div className="flex items-end justify-center my-8 gap-1">
               <div className="text-3xl font-bold leading-none">
                 ${price.value}
               </div>
@@ -48,7 +48,7 @@ export default function PricingCard({
           {list && list.length > 0 && (
             <ul className="flex flex-col gap-2 my-8">
               {list.map((item) => (
-                <li key={item} className="flex items-center gap-2">
+                <li key={item} className="flex items-center justify-center gap-2">
                   <Check size={16} />
                   <span>{item}</span>
                 </li>

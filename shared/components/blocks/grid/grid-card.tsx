@@ -57,7 +57,7 @@ export default function GridCard({
           <div
             className={cn(color === "primary" ? "text-background" : undefined)}>
             {title && (
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-center items-center mb-4">
                 <h3 className="font-bold text-2xl">{title}</h3>
               </div>
             )}
