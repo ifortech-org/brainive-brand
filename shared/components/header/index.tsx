@@ -105,9 +105,9 @@ export default function Header() {
             id="language-switch-desktop"
             value={isEnglish ? "en" : "it"}
             onChange={(event) => handleLanguageChange(event.target.value)}
-            className="h-9 rounded-md border border-input bg-transparent px-2 text-sm text-foreground/80">
-            <option value="it">IT</option>
-            <option value="en">EN</option>
+            className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground/80">
+            <option value="it" className="bg-background text-foreground">IT</option>
+            <option value="en" className="bg-background text-foreground">EN</option>
           </select>
         </div>
         <div className="flex items-center gap-3 xl:hidden">
@@ -118,9 +118,9 @@ export default function Header() {
             id="language-switch-mobile"
             value={isEnglish ? "en" : "it"}
             onChange={(event) => handleLanguageChange(event.target.value)}
-            className="h-9 rounded-md border border-input bg-transparent px-2 text-sm text-foreground/80">
-            <option value="it">IT</option>
-            <option value="en">EN</option>
+            className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground/80">
+            <option value="it" className="bg-background text-foreground">IT</option>
+            <option value="en" className="bg-background text-foreground">EN</option>
           </select>
           <MobileNav navItems={navItems} />
         </div>
