@@ -24,6 +24,7 @@ import { useRef, useState } from "react";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { toast } from "sonner";
 import { PAGE_QUERYResult } from "@/sanity.types";
+import { usePathname } from "next/navigation";
 
 type ContactFormProps = Extract<
   NonNullable<NonNullable<PAGE_QUERYResult>["blocks"]>[number],
@@ -40,7 +41,11 @@ function ContactForm({
     side_image && side_image.asset?._id ? urlFor(side_image).url() : "";
   let captchaRef = useRef<HCaptcha | null>(null);
 
-  let [isVerified, setIsverified] = useState(false);
+  const pathname = usePathname();
+  const isEnglish =
+    pathname === "/en" || (pathname ? pathname.startsWith("/en/") : false);
+
+  let [hCaptchaToken, setHCaptchaToken] = useState<string | null>(null);
   let [formData, setFormData] = useState({
     email: "",
     name: "",
@@ -53,8 +58,8 @@ function ContactForm({
   function handleSubmit(e: any) {
     e.preventDefault();
 
-    if (!isVerified) {
-      toast("Verifica hCaptcha fallita, Per favore, completa il controllo.");
+    if (!hCaptchaToken) {
+      toast(isEnglish ? "hCaptcha verification failed, please complete the check." : "Verifica hCaptcha fallita, Per favore, completa il controllo.");
       return;
     }
 
@@ -70,34 +75,34 @@ function ContactForm({
         business_name: formData.business_name,
         request: formData.request,
         description: formData.description,
+        language: isEnglish ? "en" : "it",
+        hCaptchaToken: hCaptchaToken,
       }),
     })
       .then((response) => response.json())
       .then((data) => {
-        toast(
-          "Richiesta di contatto registrata con successo, a breve verrà contattato da uno dei nostri operatori"
-        );
+        if (data.success) {
+          toast(
+            isEnglish ? "Contact request successfully registered, you will be contacted shortly by one of our operators" : "Richiesta di contatto registrata con successo, a breve verrà contattato da uno dei nostri operatori"
+          );
+          // Reset form
+          setFormData({
+            email: "",
+            name: "",
+            surname: "",
+            business_name: "",
+            request: "",
+            description: "",
+          });
+          setHCaptchaToken(null);
+          captchaRef.current?.resetCaptcha();
+        } else {
+          toast(data.message || (isEnglish ? "Error sending request" : "Errore nell'invio della richiesta"));
+        }
+      })
+      .catch((error) => {
+        toast(isEnglish ? "Error sending request" : "Errore nell'invio della richiesta");
       });
-  }
-
-  async function handleCaptchaSubmission(token: string) {
-    // Server function to verify captcha
-    const request = fetch("/api/captcha", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        token: token,
-      }),
-    });
-
-    const response = await request;
-    if (response.ok) {
-      setIsverified(true);
-    } else {
-      setIsverified(false);
-    }
   }
 
   return (
@@ -120,7 +125,7 @@ function ContactForm({
 
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Contattaci</DialogTitle>
+              <DialogTitle>{isEnglish ? "Contact Us" : "Contattaci"}</DialogTitle>
               <DialogDescription></DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-2">
@@ -136,7 +141,7 @@ function ContactForm({
                 />
               </div>
               <div>
-                <Label htmlFor="name">Nome</Label>
+                <Label htmlFor="name">{isEnglish ? "First Name" : "Nome"}</Label>
                 <Input
                   id="name"
                   type="text"
@@ -147,7 +152,7 @@ function ContactForm({
                 />
               </div>
               <div>
-                <Label htmlFor="surname">Cognome</Label>
+                <Label htmlFor="surname">{isEnglish ? "Last Name" : "Cognome"}</Label>
                 <Input
                   id="surname"
                   type="text"
@@ -158,7 +163,7 @@ function ContactForm({
                 />
               </div>
               <div>
-                <Label htmlFor="business_name">Azienda</Label>
+                <Label htmlFor="business_name">{isEnglish ? "Company" : "Azienda"}</Label>
                 <Input
                   id="business_name"
                   type="text"
@@ -169,7 +174,7 @@ function ContactForm({
                 />
               </div>
               <div>
-                <Label htmlFor="request">Richiesta</Label>
+                <Label htmlFor="request">{isEnglish ? "Request" : "Richiesta"}</Label>
                 <Input
                   id="request"
                   type="text"
@@ -180,7 +185,7 @@ function ContactForm({
                 />
               </div>
               <div>
-                <Label htmlFor="description">Descrizione</Label>
+                <Label htmlFor="description">{isEnglish ? "Description" : "Descrizione"}</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
@@ -193,12 +198,13 @@ function ContactForm({
                 <HCaptcha
                   ref={captchaRef}
                   sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
-                  onVerify={handleCaptchaSubmission}
-                  onExpire={() => setIsverified(false)}
+                  onVerify={(token) => setHCaptchaToken(token)}
+                  onExpire={() => setHCaptchaToken(null)}
                 />
                 <p className="text-xs my-2">
-                  Cliccando "Invia" si dichiara di aver preso visione
-                  dell’informativa per il trattamento dei dati personali.
+                  {isEnglish
+                    ? 'By clicking "Submit" you acknowledge that you have read the privacy policy.'
+                    : 'Cliccando "Invia" si dichiara di aver preso visione dell’informativa per il trattamento dei dati personali.'}
                 </p>
               </div>
 
@@ -206,14 +212,16 @@ function ContactForm({
                 type="submit"
                 size="sm"
                 className="px-3"
-                onClick={handleSubmit}>
-                Invia
+                onClick={handleSubmit}
+                disabled={!hCaptchaToken}
+              >
+                {isEnglish ? "Submit" : "Invia"}
               </Button>
             </div>
             <DialogFooter className="sm:justify-end">
               <DialogClose asChild>
                 <Button type="button" variant="secondary">
-                  Close
+                  {isEnglish ? "Close" : "Chiudi"}
                 </Button>
               </DialogClose>
             </DialogFooter>

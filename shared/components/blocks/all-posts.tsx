@@ -8,6 +8,7 @@ import { Category } from "@/shared/types";
 
 import PostList from "../post-list";
 import React from "react";
+import { headers } from "next/headers";
 
 type AllPostsProps = Extract<
   NonNullable<NonNullable<PAGE_QUERYResult>["blocks"]>[number],
@@ -21,6 +22,11 @@ export default async function AllPosts({
   const color = stegaClean(colorVariant);
   const posts = await fetchSanityPosts();
 
+  // Rilevamento della lingua dal pathname
+  const headersList = await headers();
+  const pathname = headersList.get('x-pathname') || '/';
+  const isEnglish = pathname === '/en' || pathname.startsWith('/en/');
+
   const categories: Category[] = posts
     .flatMap((post) => post?.categories ?? [])
     .map((category) => ({
@@ -32,9 +38,11 @@ export default async function AllPosts({
     <SectionContainer color={color} padding={padding}>
       <React.Suspense fallback={<div>Loading...</div>}>
         <div className="border-t border-b mb-4 py-2 flex justify-between items-center">
-          <h1 className="font-semibold text-xl self-center">Ultime notizie</h1>
+          <h1 className="font-semibold text-xl self-center">
+            {isEnglish ? "Latest News" : "Ultime notizie"}
+          </h1>
 
-          <CategoryFilter categories={categories} />
+          <CategoryFilter categories={categories} isEnglish={isEnglish} />
         </div>
 
         <PostList posts={posts} />
