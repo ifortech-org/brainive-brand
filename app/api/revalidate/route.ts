@@ -27,12 +27,7 @@ export async function POST(request: NextRequest) {
       revalidatePath(pagePath);
       revalidatedPaths.push(pagePath);
       
-      // Rivalidate anche la versione inglese se esiste
-      const enPath = slug.current === 'index' ? '/en' : `/en/${slug.current}`;
-      revalidatePath(enPath);
-      revalidatedPaths.push(enPath);
-      
-      console.log(`Revalidated page: ${slug.current} -> ${pagePath}, ${enPath}`);
+      console.log(`Revalidated page: ${slug.current} -> ${pagePath}`);
     }
     
     if (_type === 'post' && slug?.current) {
