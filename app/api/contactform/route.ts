@@ -1,14 +1,47 @@
 import nodemailer from "nodemailer";
+import { text } from "stream/consumers";
+
+type HCaptchaVerifyResponse = {
+  success: boolean;
+  "error-codes"?: string[] | string;
+  challenge_ts?: string;
+  hostname?: string;
+  credit?: boolean;
+  score?: number;
+  score_reason?: string[];
+};
 
 const mailSenderAccount = {
   user: process.env.MAIL_SENDER_ACCOUNT_USERNAME,
   pass: process.env.MAIL_SENDER_ACCOUNT_PASSWORD,
 };
 
+// Escape base per HTML (evita injection nelle variabili utente)
+function escapeHtml(str: string) {
+  return str.replace(/[&<>'"/]/g, function (s) {
+    const entity: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;',
+      '/': '&#x2F;',
+    };
+    return entity[s] || s;
+  });
+};
+
 export async function POST(request: Request) {
   try {
     const { name, surname, email, business_name, request: requestType, description, language, hCaptchaToken } =
       await request.json();
+
+    // Applica escape HTML ai campi che verranno usati nei template
+    const escapedName = escapeHtml(name);
+    const escapedSurname = escapeHtml(surname || '');
+    const escapedBusinessName = escapeHtml(business_name);
+    const escapedRequestType = escapeHtml(requestType);
+    const escapedDescription = escapeHtml(description);
 
     if (!name || !email || !business_name || !requestType || !description) {
       return new Response(JSON.stringify({ success: false, message: "Missing required fields" }), { status: 400 });
@@ -28,7 +61,7 @@ export async function POST(request: Request) {
       body: `secret=${process.env.HCAPTCHA_SECRET_KEY}&response=${hCaptchaToken}`,
     });
 
-    const captchaData = await captchaResponse.json();
+    const captchaData: HCaptchaVerifyResponse = await captchaResponse.json();
 
     if (!captchaData.success) {
       return new Response(JSON.stringify({ success: false, message: "hCaptcha verification failed" }), { status: 400 });
@@ -56,9 +89,9 @@ export async function POST(request: Request) {
     const internalMailData = {
       from: mailSenderAccount.user,
       to: "commerciale@integys.com",
-      subject: "Richiesta di contatto da brainive",
-      text: description,
-      html: `<div> Nome: ${name} <br/> Cognome: ${surname} <br/> Email aziendale: ${email} <br/> Azienda: ${business_name} <br/> Richiesta: ${requestType} <br/> Descrizione: <br/> ${description} </div>`,
+      subject: "BRAINIVE - Richiesta di contatto",
+      text: `Nome: ${escapedName}\nCognome: ${escapedSurname}\nEmail aziendale: ${email}\nAzienda: ${escapedBusinessName}\nRichiesta: ${escapedRequestType}\nDescrizione:\n${escapedDescription}`,
+      html: `<div> Nome: ${escapedName} <br/> Cognome: ${escapedSurname} <br/> Email aziendale: ${email} <br/> Azienda: ${escapedBusinessName} <br/> Richiesta: ${escapedRequestType} <br/> Descrizione: <br/> ${escapedDescription} </div>`,
     };
 
     // Email di conferma per l'utente (multilingue)
@@ -68,32 +101,34 @@ export async function POST(request: Request) {
         body: `<div>
           <h1>Brainive</h1>
           <div>
-            <p>Gentile ${name} ${surname}, <br><br>
+            <p>Gentile ${escapedName} ${escapedSurname}, <br><br>
             Grazie per averci contattato. Di seguito il riepilogo della tua richiesta: <br><br>
-            <strong>Azienda:</strong> ${business_name} <br>
-            <strong>Oggetto:</strong> ${requestType} <br>
-            <strong>Messaggio:</strong> ${description} <br><br>
+            <strong>Azienda:</strong> ${escapedBusinessName} <br>
+            <strong>Oggetto:</strong> ${escapedRequestType} <br>
+            <strong>Messaggio:</strong> ${escapedDescription} <br><br>
             Ti contatteremo al più presto. <br><br>
             Cordiali saluti, <br><br>
             Il Team di Brainive</p>
           </div>
-        </div>`
+        </div>`,
+        text: `${escapedName} ${escapedSurname}, grazie per averci contattato. Richiesta: ${escapedRequestType}. Messaggio: ${escapedDescription}`,
       },
       en: {
         subject: "Contact Request Summary - Brainive",
         body: `<div>
           <h1>Brainive</h1>
           <div>
-            <p>Dear ${name} ${surname}, <br><br>
+            <p>Dear ${escapedName} ${escapedSurname}, <br><br>
             Thank you for contacting us. Below is a summary of your request: <br><br>
-            <strong>Company:</strong> ${business_name} <br>
-            <strong>Subject:</strong> ${requestType} <br>
-            <strong>Message:</strong> ${description} <br><br>
+            <strong>Company:</strong> ${escapedBusinessName} <br>
+            <strong>Subject:</strong> ${escapedRequestType} <br>
+            <strong>Message:</strong> ${escapedDescription} <br><br>
             We will contact you as soon as possible. <br><br>
             Best regards, <br><br>
             The Brainive Team</p>
           </div>
-        </div>`
+        </div>`,
+        text: `${escapedName} ${escapedSurname}, thank you for contacting us. Request: ${escapedRequestType}. Message: ${escapedDescription}`,
       }
     };
 
@@ -104,7 +139,7 @@ export async function POST(request: Request) {
       from: mailSenderAccount.user,
       to: email,
       subject: confirmationTemplate.subject,
-      text: `${name} ${surname}, grazie per averci contattato. Richiesta: ${requestType}. Messaggio: ${description}`,
+      text: confirmationTemplate.text,
       html: confirmationTemplate.body,
     };
 
@@ -120,7 +155,7 @@ export async function POST(request: Request) {
       JSON.stringify({
         success: true,
         message: successMessage,
-        data: { name, surname, email, business_name, request: requestType },
+        data: { name: escapedName, surname: escapedSurname, email, business_name: escapedBusinessName, request: escapedRequestType },
       }),
       { status: 200 },
     );
