@@ -14,8 +14,8 @@ const isProduction = process.env.NEXT_PUBLIC_SITE_ENV === "production";
 export async function generateMetadata() {
   const seo = await client.fetch(GLOBAL_SEO_QUERY);
   return {
-    title: seo?.title || "iFortech",
-    description: seo?.description || "iFortech.",
+    title: seo?.title || "Brainive",
+    description: seo?.description || "Brainive.",
     keywords: seo?.keywords || [
       "Next.js",
       "Sanity",
@@ -26,8 +26,8 @@ export async function generateMetadata() {
       "Template",
     ],
     openGraph: {
-      title: seo?.title || "iFortech",
-      description: seo?.description || "iFortech",
+      title: seo?.title || "Brainive",
+      description: seo?.description || "Brainive",
       images: [
         seo?.image?.asset?.url
           ? {
@@ -47,18 +47,18 @@ export async function generateMetadata() {
     },
     twitter: {
       card: "summary_large_image",
-      title: seo?.title || "iFortech",
-      description: seo?.description || "iFortech",
+      title: seo?.title || "Brainive",
+      description: seo?.description || "Brainive",
       images: [
         seo?.image?.asset?.url
           ? urlFor(seo.image).quality(100).url()
-          : `${process.env.NEXT_PUBLIC_SITE_URL}/images/og-image.jpg`,
+          : `${process.env.NEXT_PUBLIC_SITE_URL}/images/brainive_og.jpg`,
       ],
       creator: "@tuotwitter", // Sostituisci con il tuo handle Twitter
     },
     robots:
       seo?.robots || (!isProduction ? "noindex, nofollow" : "index, follow"),
-    authors: [{ name: "iFortech", url: process.env.NEXT_PUBLIC_SITE_URL }],
+    authors: [{ name: "Brainive", url: process.env.NEXT_PUBLIC_SITE_URL }],
   };
 }
 
